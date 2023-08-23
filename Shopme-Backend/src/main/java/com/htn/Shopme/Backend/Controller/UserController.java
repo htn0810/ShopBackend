@@ -3,6 +3,7 @@ package com.htn.Shopme.Backend.Controller;
 import com.htn.Shopme.Backend.DTO.UserDTO;
 import com.htn.Shopme.Backend.Entity.User;
 import com.htn.Shopme.Backend.Exception.ResourceNotFoundException;
+import com.htn.Shopme.Backend.Service.ImageService;
 import com.htn.Shopme.Backend.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -35,14 +37,11 @@ public class UserController {
     }
 
     @PostMapping
-//    public ResponseEntity<UserDTO> create(@RequestBody User user, @RequestParam("image") MultipartFile file) throws URISyntaxException, ResourceNotFoundException {
-    public ResponseEntity<UserDTO> create(@RequestPart("user") User user, @RequestPart("image") MultipartFile file) throws URISyntaxException, ResourceNotFoundException {
+    public ResponseEntity<UserDTO> create(@RequestPart("user") User user, @RequestPart("image") MultipartFile file) throws URISyntaxException, ResourceNotFoundException, IOException {
         System.out.println(file.getOriginalFilename());
         System.out.println(user.toString());
-        User newUser = userService.createUser(user);
+        User newUser = userService.createUser(user, file);
         return ResponseEntity.created(new URI("/api/user/" + user.getId())).body(new UserDTO(newUser));
-//        return ResponseEntity.created(new URI("/api/user/" + user.getId())).body(new UserDTO(user));
-
     }
 
     @PutMapping

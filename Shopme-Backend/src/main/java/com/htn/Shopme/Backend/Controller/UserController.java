@@ -7,6 +7,9 @@ import com.htn.Shopme.Backend.Service.ImageService;
 import com.htn.Shopme.Backend.Service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +34,20 @@ public class UserController {
     public ResponseEntity<List<UserDTO>> getAll() {
         try {
             return ResponseEntity.ok(userService.getAll().stream().map(UserDTO::new).collect(Collectors.toList()));
+        } catch (RuntimeException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "HTTP Status will be NOT FOUND (CODE 404)\n");
+        }
+    }
+
+    @GetMapping("/pagination")
+    public ResponseEntity<List<UserDTO>> getAllWithPagination(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize) {
+        try {
+            Page<User> pageUser = userService.getAllWithPagination(page - 1, pageSize);
+            List<UserDTO> listUser = pageUser.stream().map(UserDTO::new).collect(Collectors.toList());
+            HttpHeaders responseHeaders = new HttpHeaders();
+            responseHeaders.set("totalPage", pageUser.getTotalPages() + "");
+            responseHeaders.set("totalElement", pageUser.getTotalElements() + "");
+            return ResponseEntity.ok().headers(responseHeaders).body(listUser);
         } catch (RuntimeException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "HTTP Status will be NOT FOUND (CODE 404)\n");
         }

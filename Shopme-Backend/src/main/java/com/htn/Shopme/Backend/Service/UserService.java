@@ -7,6 +7,9 @@ import com.htn.Shopme.Backend.Exception.ResourceNotFoundException;
 import com.htn.Shopme.Backend.Repository.RoleRepository;
 import com.htn.Shopme.Backend.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -29,8 +32,14 @@ public class UserService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public List<User> getAll() {
-        return (List<User>) userRepository.findAll();
+        return userRepository.findAllByEnabledIsTrue();
     }
+
+    public Page<User> getAllWithPagination(Integer page, Integer pageSize) {
+        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 0);
+        return userRepository.findAllByEnabledIsTrue(pagination);
+    }
+
 
     @Transactional
     public User createUser(User user, MultipartFile image) throws IOException {

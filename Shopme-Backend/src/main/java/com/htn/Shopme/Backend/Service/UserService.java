@@ -1,36 +1,61 @@
 package com.htn.Shopme.Backend.Service;
 
+import com.htn.Shopme.Backend.Controller.ImageController;
 import com.htn.Shopme.Backend.Entity.Role;
 import com.htn.Shopme.Backend.Entity.User;
 import com.htn.Shopme.Backend.Exception.ResourceNotFoundException;
 import com.htn.Shopme.Backend.Repository.RoleRepository;
 import com.htn.Shopme.Backend.Repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
+import java.io.IOException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+    private final ImageService imageService;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     public List<User> getAll() {
-        return (List<User>) userRepository.findAll();
+        return userRepository.findAllByEnabledIsTrue();
     }
 
+    public Page<User> getAllWithPagination(Integer page, Integer pageSize, String sortName, String sortType) {
+        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 5, sortType.equals("asc") ? Sort.by(sortName).ascending(): Sort.by(sortName).descending());
+        return userRepository.findAllByEnabledIsTrue(pagination);
+    }
+
+    public Page<User> getAllWithPaginationAndFilter(Integer page, Integer pageSize, String sortName, String sortType, String keyword) {
+        System.out.println(keyword);
+        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 5, sortType.equals("asc") ? Sort.by(sortName).ascending(): Sort.by(sortName).descending());
+        return userRepository.findAllByEnabledIsTrue(pagination, keyword);
+    }
+
+
     @Transactional
-    public User createUser(User user){
+    public User createUser(User user, MultipartFile image) throws IOException {
         if (userRepository.findByEmail(user.getEmail()).isEmpty()) {
             encodeUserPassword(user);
             user.setRoles(user.getRoles().stream().map(role -> roleRepository.findByName(role.getName())).collect(Collectors.toSet()));
+            if (image != null) {
+                Integer imageId = imageService.saveImage(image).getId();
+                String imageUrl = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ImageController.class).getImage(imageId)).toString();
+                user.setPhotos(imageUrl);
+            }
             userRepository.save(user);
             return user;
         } else {

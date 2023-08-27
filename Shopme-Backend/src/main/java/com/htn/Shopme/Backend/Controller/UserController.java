@@ -40,9 +40,17 @@ public class UserController {
     }
 
     @GetMapping("/pagination")
-    public ResponseEntity<List<UserDTO>> getAllWithPagination(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize) {
+    public ResponseEntity<List<UserDTO>> getAllWithPagination(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize,
+                                                              @RequestParam(name = "sort", defaultValue = "email") String sortName,
+                                                              @RequestParam(name = "sortType", defaultValue = "asc") String sortType,
+                                                              @RequestParam(name = "keyword", required = false) String keyword) {
         try {
-            Page<User> pageUser = userService.getAllWithPagination(page - 1, pageSize);
+            Page<User> pageUser = null;
+            if (keyword != null) {
+                pageUser = userService.getAllWithPaginationAndFilter(page - 1, pageSize, sortName, sortType, keyword);
+            } else {
+                pageUser = userService.getAllWithPagination(page - 1, pageSize, sortName, sortType);
+            }
             List<UserDTO> listUser = pageUser.stream().map(UserDTO::new).collect(Collectors.toList());
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.set("totalPage", pageUser.getTotalPages() + "");
@@ -52,6 +60,25 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "HTTP Status will be NOT FOUND (CODE 404)\n");
         }
     }
+
+//    @GetMapping("/pagination/filter")
+//    public ResponseEntity<List<UserDTO>> getFilter(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize,
+//                                                              @RequestParam(name = "sort", defaultValue = "email") String sortName,
+//                                                              @RequestParam(name = "sortType", defaultValue = "asc") String sortType,
+//                                                              @RequestParam(name = "keyword") String keyword) {
+//        System.out.println(keyword);
+//        System.out.println("have keyword");
+//        Page<User> pageUser = userService.getAllWithPaginationAndFilter(page - 1, pageSize, sortName, sortType, keyword);
+//        System.out.println(keyword);
+//        System.out.println(pageUser.toString());
+//
+//        List<UserDTO> listUser = pageUser.stream().map(UserDTO::new).collect(Collectors.toList());
+//        HttpHeaders responseHeaders = new HttpHeaders();
+//        responseHeaders.set("totalPage", pageUser.getTotalPages() + "");
+//        responseHeaders.set("totalElement", pageUser.getTotalElements() + "");
+//        return ResponseEntity.ok().headers(responseHeaders).body(listUser);
+//
+//    }
 
     @PostMapping
     public ResponseEntity<UserDTO> create(@RequestPart("user") User user, @RequestPart("image") MultipartFile file) throws URISyntaxException, ResourceNotFoundException, IOException {

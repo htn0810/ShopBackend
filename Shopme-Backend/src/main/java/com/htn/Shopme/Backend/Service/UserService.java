@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,9 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
 import java.io.IOException;
-import java.util.Base64;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -35,9 +34,15 @@ public class UserService {
         return userRepository.findAllByEnabledIsTrue();
     }
 
-    public Page<User> getAllWithPagination(Integer page, Integer pageSize) {
-        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 0);
+    public Page<User> getAllWithPagination(Integer page, Integer pageSize, String sortName, String sortType) {
+        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 5, sortType.equals("asc") ? Sort.by(sortName).ascending(): Sort.by(sortName).descending());
         return userRepository.findAllByEnabledIsTrue(pagination);
+    }
+
+    public Page<User> getAllWithPaginationAndFilter(Integer page, Integer pageSize, String sortName, String sortType, String keyword) {
+        System.out.println(keyword);
+        Pageable pagination = PageRequest.of(page != null ? page : 0, pageSize != null ? pageSize : 5, sortType.equals("asc") ? Sort.by(sortName).ascending(): Sort.by(sortName).descending());
+        return userRepository.findAllByEnabledIsTrue(pagination, keyword);
     }
 
 

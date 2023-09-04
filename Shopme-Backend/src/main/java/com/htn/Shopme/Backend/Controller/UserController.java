@@ -5,6 +5,7 @@ import com.htn.Shopme.Backend.Entity.User;
 import com.htn.Shopme.Backend.Exception.ResourceNotFoundException;
 import com.htn.Shopme.Backend.Service.ImageService;
 import com.htn.Shopme.Backend.Service.UserService;
+import com.htn.Shopme.Backend.Util.UserCsvExporter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -61,29 +63,15 @@ public class UserController {
         }
     }
 
-//    @GetMapping("/pagination/filter")
-//    public ResponseEntity<List<UserDTO>> getFilter(@RequestParam("page") Integer page, @RequestParam("pageSize") Integer pageSize,
-//                                                              @RequestParam(name = "sort", defaultValue = "email") String sortName,
-//                                                              @RequestParam(name = "sortType", defaultValue = "asc") String sortType,
-//                                                              @RequestParam(name = "keyword") String keyword) {
-//        System.out.println(keyword);
-//        System.out.println("have keyword");
-//        Page<User> pageUser = userService.getAllWithPaginationAndFilter(page - 1, pageSize, sortName, sortType, keyword);
-//        System.out.println(keyword);
-//        System.out.println(pageUser.toString());
-//
-//        List<UserDTO> listUser = pageUser.stream().map(UserDTO::new).collect(Collectors.toList());
-//        HttpHeaders responseHeaders = new HttpHeaders();
-//        responseHeaders.set("totalPage", pageUser.getTotalPages() + "");
-//        responseHeaders.set("totalElement", pageUser.getTotalElements() + "");
-//        return ResponseEntity.ok().headers(responseHeaders).body(listUser);
-//
-//    }
+    @GetMapping("/export/csv")
+    public void exportToCSV(HttpServletResponse response) throws IOException {
+        List<UserDTO> listUser = userService.getAll().stream().map(UserDTO::new).collect(Collectors.toList());
+        UserCsvExporter exporter = new UserCsvExporter();
+        exporter.export(listUser, response);
+    }
 
     @PostMapping
     public ResponseEntity<UserDTO> create(@RequestPart("user") User user, @RequestPart("image") MultipartFile file) throws URISyntaxException, ResourceNotFoundException, IOException {
-        System.out.println(file.getOriginalFilename());
-        System.out.println(user.toString());
         User newUser = userService.createUser(user, file);
         return ResponseEntity.created(new URI("/api/user/" + user.getId())).body(new UserDTO(newUser));
     }

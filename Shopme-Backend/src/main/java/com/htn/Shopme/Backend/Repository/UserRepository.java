@@ -23,4 +23,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Page<User> findAllByEnabledIsTrue(Pageable pageable, @Param("keyword") String keyword);
 
     Optional<User> findByEmail(String email);
+
+    Boolean existsByEmail(String email);
 }

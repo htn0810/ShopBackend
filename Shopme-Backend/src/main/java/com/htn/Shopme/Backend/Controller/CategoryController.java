@@ -29,15 +29,28 @@ public class CategoryController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Category> createCategory(@RequestPart("category") CategoryDTO categoryDTO, @RequestPart("image")MultipartFile imageFile) throws IOException, URISyntaxException {
+    public ResponseEntity<?> createCategory(@RequestPart("category") CategoryDTO categoryDTO, @RequestPart("image") MultipartFile imageFile) throws IOException, URISyntaxException {
         Category newCategory = categoryService.addNewCategory(categoryDTO, imageFile);
-        return ResponseEntity.created(new URI("/api/category/" + newCategory.getName())).body(newCategory);
+        if (newCategory != null) {
+            return ResponseEntity.created(new URI("/api/category/" + newCategory.getName().trim())).body(new InfoCategoryDTO(newCategory));
+        }
+        return ResponseEntity.badRequest().body("Name or Alias is existed!");
     }
 
     @PutMapping("/update/{name}")
-    public ResponseEntity<InfoCategoryDTO> updateCategory(@PathVariable String name,
+    public ResponseEntity<?> updateCategory(@PathVariable String name,
                                                    @RequestPart("category") CategoryDTO categoryDTO,
                                                    @RequestPart("image") MultipartFile imageFile) throws IOException {
-        return ResponseEntity.ok( new InfoCategoryDTO(categoryService.updateCategory(name, categoryDTO, imageFile)));
+        Category newCategory = categoryService.updateCategory(name, categoryDTO, imageFile);
+        if (newCategory != null) {
+            return ResponseEntity.ok( new InfoCategoryDTO(newCategory));
+        }
+        return ResponseEntity.badRequest().body("Name or Alias is existed!");
+    }
+
+    @DeleteMapping("/delete/{name}")
+    public ResponseEntity<Void> deleteCategory(@PathVariable String name) {
+        categoryService.deleteCategory(name);
+        return ResponseEntity.noContent().build();
     }
 }

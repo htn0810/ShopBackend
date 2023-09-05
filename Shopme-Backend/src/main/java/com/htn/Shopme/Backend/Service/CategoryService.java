@@ -28,17 +28,23 @@ public class CategoryService {
     public Category addNewCategory(CategoryDTO categoryDTO, MultipartFile imageFile) throws IOException {
         Category newCategory = new Category();
         newCategory = new ObjectMapper().updateValue(newCategory, categoryDTO);
-        if (imageFile != null) {
-            Integer imageId = imageService.saveImage(imageFile).getId();
-            String imageUrl = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ImageController.class).getImage(imageId)).toString();
-            newCategory.setImage(imageUrl);
+        if (isUniqueCategory(newCategory)) {
+            if (imageFile != null) {
+                Integer imageId = imageService.saveImage(imageFile).getId();
+                String imageUrl = WebMvcLinkBuilder.linkTo(WebMvcLinkBuilder.methodOn(ImageController.class).getImage(imageId)).toString();
+                newCategory.setImage(imageUrl);
+            }
+            return categoryRepository.save(newCategory);
         }
-        return categoryRepository.save(newCategory);
+        return null;
     }
 
     public Category updateCategory(String categoryName, CategoryDTO categoryDTO, MultipartFile imageFile) throws IOException {
         Category existCategory = categoryRepository.findByName(categoryName).orElseThrow(() -> new ResourceNotFoundException("Cannot find category : " + categoryName));
         existCategory = new ObjectMapper().updateValue(existCategory, categoryDTO);
+        if (!isUniqueCategory(existCategory)) {
+            return null;
+        }
         if (imageFile != null) {
             if (existCategory.getImage() != null) {
                 int theLastSeperator = existCategory.getImage().lastIndexOf("/");
@@ -52,5 +58,15 @@ public class CategoryService {
             existCategory.setImage(imageUrl);
         }
         return categoryRepository.save(existCategory);
+    }
+
+    public boolean isUniqueCategory(Category category) {
+        Category existCategory = categoryRepository.findByNameOrAlias(category.getName(), category.getAlias());
+        return existCategory == null;
+    }
+
+    public void deleteCategory(String categoryName) {
+        Category deleteCategory = categoryRepository.findByName(categoryName).get();
+        categoryRepository.delete(deleteCategory);
     }
 }

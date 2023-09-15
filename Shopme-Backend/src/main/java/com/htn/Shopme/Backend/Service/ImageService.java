@@ -29,7 +29,9 @@ public class ImageService {
     }
 
     public void deleteImage(Integer id) {
-        imageRepository.deleteById(id);
+        if (imageRepository.findById(id).isPresent()) {
+            imageRepository.deleteById(id);
+        }
     }
 
 
